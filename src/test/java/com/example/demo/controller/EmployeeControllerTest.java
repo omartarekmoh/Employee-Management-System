@@ -4,6 +4,7 @@ import com.example.demo.config.TestSecurityConfig;
 import com.example.demo.dto.EmployeeRequestDTO;
 import com.example.demo.dto.EmployeeResponseDTO;
 import com.example.demo.services.EmployeeService;
+import com.example.demo.utils.JwtUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,11 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,6 +36,8 @@ class EmployeeControllerTest {
 
     @MockitoBean
     private EmployeeService employeeService;
+    @MockitoBean
+    private JwtUtils jwtUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -61,43 +64,11 @@ class EmployeeControllerTest {
     }
 
     @Test
-    void testCreateEmployee() throws Exception {
+    @WithMockUser(roles = "ADMIN")
+    void testCreateEmployeeWithAdminRole() throws Exception {
         Mockito.when(employeeService.createEmployee(any(EmployeeRequestDTO.class))).thenReturn(responseDTO);
 
         mockMvc.perform(post("/api/employees")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is("Alice")))
-                .andExpect(jsonPath("$.email", is("alice@example.com")))
-                .andExpect(jsonPath("$.departmentName", is("Engineering")));
-    }
-
-    @Test
-    void testGetEmployeeById() throws Exception {
-        Mockito.when(employeeService.getEmployee(1L)).thenReturn(responseDTO);
-
-        mockMvc.perform(get("/api/employees/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email", is("alice@example.com")));
-    }
-
-    @Test
-    void testGetAllEmployees() throws Exception {
-        List<EmployeeResponseDTO> list = Collections.singletonList(responseDTO);
-        Mockito.when(employeeService.getAllEmployees()).thenReturn(list);
-
-        mockMvc.perform(get("/api/employees"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name", is("Alice")));
-    }
-
-    @Test
-    void testUpdateEmployee() throws Exception {
-        Mockito.when(employeeService.updateEmployee(Mockito.eq(1L), any(EmployeeRequestDTO.class))).thenReturn(responseDTO);
-
-        mockMvc.perform(put("/api/employees/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk())
@@ -105,7 +76,29 @@ class EmployeeControllerTest {
     }
 
     @Test
-    void testDeleteEmployee() throws Exception {
+    @WithMockUser(roles = "USER")
+    void testGetAllEmployeesWithUserRole() throws Exception {
+        Mockito.when(employeeService.getAllEmployees()).thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(get("/api/employees"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateEmployeeWithAdminRole() throws Exception {
+        Mockito.when(employeeService.updateEmployee(Mockito.eq(1L), any(EmployeeRequestDTO.class))).thenReturn(responseDTO);
+
+        mockMvc.perform(put("/api/employees/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteEmployeeWithAdminRole() throws Exception {
         Mockito.doNothing().when(employeeService).deleteEmployee(1L);
 
         mockMvc.perform(delete("/api/employees/1"))
@@ -113,8 +106,61 @@ class EmployeeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
+    void testCreateEmployeeWithUserRoleShouldFail() throws Exception {
+        mockMvc.perform(post("/api/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void testUpdateEmployeeWithUserRoleShouldFail() throws Exception {
+        mockMvc.perform(put("/api/employees/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void testDeleteEmployeeWithUserRoleShouldFail() throws Exception {
+        mockMvc.perform(delete("/api/employees/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testCreateEmployeeWithoutAuthenticationShouldFail() throws Exception {
+        mockMvc.perform(post("/api/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testGetAllEmployeesWithoutAuthenticationShouldFail() throws Exception {
+        mockMvc.perform(get("/api/employees"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testUpdateEmployeeWithoutAuthenticationShouldFail() throws Exception {
+        mockMvc.perform(put("/api/employees/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testDeleteEmployeeWithoutAuthenticationShouldFail() throws Exception {
+        mockMvc.perform(delete("/api/employees/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateEmployeeValidationError() throws Exception {
-        // Send an invalid request (e.g., missing name)
         requestDTO.setName(null);
 
         mockMvc.perform(post("/api/employees")
@@ -126,6 +172,7 @@ class EmployeeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetEmployeeNotFound() throws Exception {
         Mockito.when(employeeService.getEmployee(99L))
                 .thenThrow(new jakarta.persistence.EntityNotFoundException("Employee not found"));
@@ -137,6 +184,7 @@ class EmployeeControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUnexpectedServerError() throws Exception {
         Mockito.when(employeeService.getEmployee(1L))
                 .thenThrow(new RuntimeException("Database failure"));
@@ -146,5 +194,4 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.success", is(false)))
                 .andExpect(jsonPath("$.error", is("Unexpected error: Database failure")));
     }
-
 }

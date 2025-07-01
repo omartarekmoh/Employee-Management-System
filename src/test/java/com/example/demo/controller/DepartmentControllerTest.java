@@ -4,6 +4,7 @@ import com.example.demo.config.TestSecurityConfig;
 import com.example.demo.dto.DepartmentRequestDTO;
 import com.example.demo.dto.DepartmentResponseDTO;
 import com.example.demo.services.DepartmentService;
+import com.example.demo.utils.JwtUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,6 +40,9 @@ public class DepartmentControllerTest {
     @MockitoBean
     private DepartmentService departmentService;
 
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -55,7 +60,8 @@ public class DepartmentControllerTest {
     }
 
     @Test
-    void testCreateDepartment() throws Exception {
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testCreateDepartmentWithAdminRole() throws Exception {
         Mockito.when(departmentService.createDepartment(any(DepartmentRequestDTO.class))).thenReturn(responseDTO);
 
         mockMvc.perform(post("/api/departments")
@@ -63,10 +69,19 @@ public class DepartmentControllerTest {
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("HR")));
-
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void testCreateDepartmentWithUserRoleShouldFail() throws Exception {
+        mockMvc.perform(post("/api/departments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testCreateDepartmentWithNoName() throws Exception {
         requestDTO.setName(null);
 
@@ -80,6 +95,7 @@ public class DepartmentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     void getDepartmentById() throws Exception {
         Mockito.when(departmentService.getDepartment(1L)).thenReturn(responseDTO);
 
@@ -89,6 +105,7 @@ public class DepartmentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     void getDepartmentByInvalidId() throws Exception {
         Mockito.when(departmentService.getDepartment(1L)).thenThrow(new jakarta.persistence.EntityNotFoundException("Department not found"));
 
@@ -100,6 +117,7 @@ public class DepartmentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     void getDepartmentByInvalidStringId() throws Exception {
         mockMvc.perform(get("/api/departments/omar"))
                 .andExpect(status().isBadRequest())
@@ -109,10 +127,9 @@ public class DepartmentControllerTest {
     }
 
     @Test
-    void testGetAllDepartments() throws Exception {
-        List<DepartmentResponseDTO> departments = List.of(responseDTO);
-
-        Mockito.when(departmentService.getAllDepartments()).thenReturn(departments);
+    @WithMockUser(username = "user", roles = {"USER"})
+    void testGetDepartmentsWithUserRole() throws Exception {
+        Mockito.when(departmentService.getAllDepartments()).thenReturn(List.of(responseDTO));
 
         mockMvc.perform(get("/api/departments"))
                 .andExpect(status().isOk())
@@ -121,7 +138,8 @@ public class DepartmentControllerTest {
     }
 
     @Test
-    void testUpdateDepartment() throws Exception {
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testUpdateDepartmentWithAdminRole() throws Exception {
         DepartmentRequestDTO updateRequest = new DepartmentRequestDTO();
         updateRequest.setName("HR Updated");
 
@@ -140,7 +158,8 @@ public class DepartmentControllerTest {
     }
 
     @Test
-    void testDeleteDepartmentWhenNotInUse() throws Exception {
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testDeleteDepartmentWithAdminRole() throws Exception {
         Mockito.doNothing().when(departmentService).deleteDepartment(1L);
 
         mockMvc.perform(delete("/api/departments/1"))
@@ -148,6 +167,15 @@ public class DepartmentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void testDeleteDepartmentWithUserRoleShouldFail() throws Exception {
+        mockMvc.perform(delete("/api/departments/1"))
+                .andExpect(status().isForbidden());
+    }
+
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testDeleteDepartmentWhenInUseShouldReturnConflict() throws Exception {
         Mockito.doThrow(new DataIntegrityViolationException("Department is in use"))
                 .when(departmentService).deleteDepartment(1L);
@@ -155,4 +183,26 @@ public class DepartmentControllerTest {
         mockMvc.perform(delete("/api/departments/1"))
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    void testGetDepartmentsWithoutAuthenticationShouldFail() throws Exception {
+        mockMvc.perform(get("/api/departments"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testCreateDepartmentWithoutAuthenticationShouldFail() throws Exception {
+        mockMvc.perform(post("/api/departments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testDeleteDepartmentWithoutAuthenticationShouldFail() throws Exception {
+        mockMvc.perform(delete("/api/departments/1"))
+                .andExpect(status().isForbidden());
+    }
+
+
 }
