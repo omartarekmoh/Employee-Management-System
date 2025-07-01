@@ -1,0 +1,158 @@
+package com.example.demo.controller;
+
+import com.example.demo.config.TestSecurityConfig;
+import com.example.demo.dto.DepartmentRequestDTO;
+import com.example.demo.dto.DepartmentResponseDTO;
+import com.example.demo.services.DepartmentService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+
+import java.util.List;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(DepartmentController.class)
+@Import(TestSecurityConfig.class)
+public class DepartmentControllerTest {
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private DepartmentService departmentService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private DepartmentRequestDTO requestDTO;
+    private DepartmentResponseDTO responseDTO;
+
+    @BeforeEach
+    void setUp() {
+        requestDTO = new DepartmentRequestDTO();
+        requestDTO.setName("HR");
+
+        responseDTO = new DepartmentResponseDTO();
+        responseDTO.setId(1L);
+        responseDTO.setName("HR");
+    }
+
+    @Test
+    void testCreateDepartment() throws Exception {
+        Mockito.when(departmentService.createDepartment(any(DepartmentRequestDTO.class))).thenReturn(responseDTO);
+
+        mockMvc.perform(post("/api/departments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("HR")));
+
+    }
+
+    @Test
+    void testCreateDepartmentWithNoName() throws Exception {
+        requestDTO.setName(null);
+
+        mockMvc.perform(post("/api/departments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.error.name").exists());
+
+    }
+
+    @Test
+    void getDepartmentById() throws Exception {
+        Mockito.when(departmentService.getDepartment(1L)).thenReturn(responseDTO);
+
+        mockMvc.perform(get("/api/departments/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("HR")));
+    }
+
+    @Test
+    void getDepartmentByInvalidId() throws Exception {
+        Mockito.when(departmentService.getDepartment(1L)).thenThrow(new jakarta.persistence.EntityNotFoundException("Department not found"));
+
+
+        mockMvc.perform(get("/api/departments/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void getDepartmentByInvalidStringId() throws Exception {
+        mockMvc.perform(get("/api/departments/omar"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.error").exists())
+                .andExpect(jsonPath("$.error", is("Method parameter 'id': Failed to convert value to required type 'Long'")));
+    }
+
+    @Test
+    void testGetAllDepartments() throws Exception {
+        List<DepartmentResponseDTO> departments = List.of(responseDTO);
+
+        Mockito.when(departmentService.getAllDepartments()).thenReturn(departments);
+
+        mockMvc.perform(get("/api/departments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name", is("HR")));
+    }
+
+    @Test
+    void testUpdateDepartment() throws Exception {
+        DepartmentRequestDTO updateRequest = new DepartmentRequestDTO();
+        updateRequest.setName("HR Updated");
+
+        DepartmentResponseDTO updatedResponse = new DepartmentResponseDTO();
+        updatedResponse.setId(1L);
+        updatedResponse.setName("HR Updated");
+
+        Mockito.when(departmentService.updateDepartment(Mockito.eq(1L), any(DepartmentRequestDTO.class)))
+                .thenReturn(updatedResponse);
+
+        mockMvc.perform(put("/api/departments/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("HR Updated")));
+    }
+
+    @Test
+    void testDeleteDepartmentWhenNotInUse() throws Exception {
+        Mockito.doNothing().when(departmentService).deleteDepartment(1L);
+
+        mockMvc.perform(delete("/api/departments/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testDeleteDepartmentWhenInUseShouldReturnConflict() throws Exception {
+        Mockito.doThrow(new DataIntegrityViolationException("Department is in use"))
+                .when(departmentService).deleteDepartment(1L);
+
+        mockMvc.perform(delete("/api/departments/1"))
+                .andExpect(status().isConflict());
+    }
+}
