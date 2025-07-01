@@ -2,11 +2,13 @@ package com.example.demo.exception;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -61,9 +63,35 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    // Handle integrity validations
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = "Database integrity violation";
+
+        ex.getMostSpecificCause();
+        if (ex.getMostSpecificCause().getMessage() != null) {
+            String detailedMessage = ex.getMostSpecificCause().getMessage();
+
+            if (detailedMessage.contains("violates foreign key constraint")) {
+                message = "Cannot delete or update because the record is still referenced by another entity.";
+            }
+        }
+
+        return buildErrorResponse(message, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String paramName = ex.getName();
+        String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        String message = String.format("Method parameter '%s': Failed to convert value to required type '%s'", paramName, requiredType);
+        return buildErrorResponse(message, HttpStatus.BAD_REQUEST);
+    }
+
     // Handle all other exceptions
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneralError(Exception ex) {
         return buildErrorResponse("Unexpected error: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 }
