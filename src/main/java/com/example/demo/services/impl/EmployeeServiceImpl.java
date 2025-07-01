@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -84,6 +85,12 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new EntityNotFoundException("Employee not found with ID: " + id);
         }
         employeeRepo.deleteById(id);
+    }
+
+    @Override
+    public Map<Department, Long> getEmployeeCountByDepartment() {
+        return employeeRepo.findAllWithDepartments().stream()
+                .collect(Collectors.groupingBy(Employee::getDepartment, Collectors.counting()));
     }
 
     private EmployeeResponseDTO mapToResponse(Employee e) {
