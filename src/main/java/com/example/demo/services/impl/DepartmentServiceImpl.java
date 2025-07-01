@@ -20,6 +20,10 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public DepartmentResponseDTO createDepartment(DepartmentRequestDTO dto) {
+        if (departmentRepo.existsByName(dto.getName())) {
+            throw new IllegalArgumentException("Department name is already in use");
+        }
+
         Department department = Department.builder()
                 .name(dto.getName())
                 .build();
@@ -28,6 +32,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         return mapToResponse(saved);
     }
+
 
     @Override
     public DepartmentResponseDTO getDepartment(Long id) {
@@ -45,14 +50,19 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public DepartmentResponseDTO updateDepartment(Long id, DepartmentRequestDTO dto) {
-        Department department = departmentRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Department not found with ID: " + id));
+        Department department = departmentRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Department not found with ID: " + id));
+
+        if (!department.getName().equals(dto.getName()) && departmentRepo.existsByName(dto.getName())) {
+            throw new IllegalArgumentException("Department name is already in use");
+        }
 
         department.setName(dto.getName());
 
         Department updated = departmentRepo.save(department);
-
         return mapToResponse(updated);
     }
+
 
     @Override
     public void deleteDepartment(Long id) {
