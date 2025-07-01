@@ -20,7 +20,7 @@ public class EmployeeSummaryScheduler {
     private final EmployeeService employeeService;
     private final DailySummaryRepository dailySummaryRepository;
 
-    @Scheduled(cron = "0 0 9 * * *", zone = "Europe/Cairo") // Runs every day at 9:00 AM
+    @Scheduled(cron = "0 0 9 * * *") // Runs every day at 9:00 AM
     public void logDailyDepartmentSummary() {
         Map<Department, Long> departmentCounts = employeeService.getEmployeeCountByDepartment();
 
