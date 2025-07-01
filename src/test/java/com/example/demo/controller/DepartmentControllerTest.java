@@ -204,5 +204,41 @@ public class DepartmentControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testUpdateDepartmentWithInvalidData() throws Exception {
+        DepartmentRequestDTO invalidRequest = new DepartmentRequestDTO();
+        invalidRequest.setName("");
+        mockMvc.perform(put("/api/departments/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.error.name").exists());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testUpdateNonExistentDepartment() throws Exception {
+        DepartmentRequestDTO updateRequest = new DepartmentRequestDTO();
+        updateRequest.setName("NonExistent");
+        Mockito.when(departmentService.updateDepartment(Mockito.eq(99L), any(DepartmentRequestDTO.class)))
+                .thenThrow(new jakarta.persistence.EntityNotFoundException("Department not found"));
+        mockMvc.perform(put("/api/departments/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void testGetAllDepartmentsWhenNoneExist() throws Exception {
+        Mockito.when(departmentService.getAllDepartments()).thenReturn(List.of());
+        mockMvc.perform(get("/api/departments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
 
 }

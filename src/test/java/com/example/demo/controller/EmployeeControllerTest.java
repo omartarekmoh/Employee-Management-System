@@ -194,4 +194,36 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.success", is(false)))
                 .andExpect(jsonPath("$.error", is("Unexpected error: Database failure")));
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateNonExistentEmployee() throws Exception {
+        Mockito.when(employeeService.updateEmployee(Mockito.eq(99L), any(EmployeeRequestDTO.class)))
+                .thenThrow(new jakarta.persistence.EntityNotFoundException("Employee not found"));
+        mockMvc.perform(put("/api/employees/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.error", is("Employee not found")));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteNonExistentEmployee() throws Exception {
+        Mockito.doThrow(new jakarta.persistence.EntityNotFoundException("Employee not found")).when(employeeService).deleteEmployee(99L);
+        mockMvc.perform(delete("/api/employees/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.error", is("Employee not found")));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void testGetAllEmployeesWhenNoneExist() throws Exception {
+        Mockito.when(employeeService.getAllEmployees()).thenReturn(List.of());
+        mockMvc.perform(get("/api/employees"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
 }
