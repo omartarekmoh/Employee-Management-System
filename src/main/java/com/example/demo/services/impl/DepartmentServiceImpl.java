@@ -2,9 +2,7 @@ package com.example.demo.services.impl;
 
 import com.example.demo.dto.DepartmentRequestDTO;
 import com.example.demo.dto.DepartmentResponseDTO;
-import com.example.demo.dto.EmployeeResponseDTO;
 import com.example.demo.model.Department;
-import com.example.demo.model.Employee;
 import com.example.demo.repository.DepartmentRepository;
 import com.example.demo.services.DepartmentService;
 import jakarta.persistence.EntityNotFoundException;
