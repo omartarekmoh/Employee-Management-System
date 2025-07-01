@@ -1,11 +1,14 @@
 package com.example.demo.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +30,23 @@ public class GlobalExceptionHandler {
                 errors.put(err.getField(), err.getDefaultMessage())
         );
         return buildErrorResponse(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    // Handle deserialization / JSON parsing errors
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleJsonParseError(HttpMessageNotReadableException ex) {
+        String message = "Malformed JSON request";
+
+        Throwable cause = ex.getCause();
+        if (cause instanceof InvalidFormatException formatEx) {
+            if (formatEx.getCause() instanceof DateTimeParseException) {
+                message = "Invalid date format. Expected format: yyyy-MM-dd";
+            } else {
+                message = "Invalid value for field: " + formatEx.getPathReference();
+            }
+        }
+
+        return buildErrorResponse(message, HttpStatus.BAD_REQUEST);
     }
 
     // Handle entity not found
