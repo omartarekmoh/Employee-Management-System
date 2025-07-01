@@ -15,6 +15,6 @@ INSERT INTO employee (name, email, salary, hire_date, department_id) VALUES
                                                                          ('Ethan Brown', 'ethan@company.com', 61000, CURRENT_DATE, 5);
 
 -- Seed Users
-INSERT INTO app_user (username, email, password, role) VALUES
-                                                           ('admin', 'admin@example.com', '{noop}admin123', 'ADMIN'),
-                                                           ('user', 'user@example.com', '{noop}user123', 'USER');
+INSERT INTO users (username, email, password, role) VALUES
+                                                        ('admin', 'admin@company.com', '$2a$12$YGIQsajODZHpJZKjV2Ii1OpxTrjQ3x/7bYi/.qm1Jz7L1B7ZQtToW', 'ADMIN'),
+                                                        ('user', 'user@company.com', '$2a$12$wQJLzwJSNPmbJL8u/NyuK.rRKhvlcxrQpjc1M.vWVg/XEwLbL08iq', 'USER');
