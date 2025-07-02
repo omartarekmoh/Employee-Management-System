@@ -12,14 +12,21 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.logging.Logger;
 
+// Scheduler service that logs and saves daily employee count summaries for each department.
 @Service
 @RequiredArgsConstructor
 public class EmployeeSummaryScheduler {
 
+    // Logger for logging department summaries.
     private static final Logger logger = Logger.getLogger(EmployeeSummaryScheduler.class.getName());
+    // Service for retrieving employee counts by department.
     private final EmployeeService employeeService;
+    // Repository for saving daily summary records.
     private final DailySummaryRepository dailySummaryRepository;
 
+    /**
+     * Scheduled task that runs every day at 9:00 AM to log and persist the employee count per department.
+     */
     @Scheduled(cron = "0 0 9 * * *") // Runs every day at 9:00 AM
     public void logDailyDepartmentSummary() {
         Map<Department, Long> departmentCounts = employeeService.getEmployeeCountByDepartment();
@@ -33,7 +40,7 @@ public class EmployeeSummaryScheduler {
                         .map(entry -> DailySummary.builder()
                                 .department(String.valueOf(entry.getKey()))
                                 .employeeCount(entry.getValue())
-                                .date(LocalDate.now()) // You must provide the date
+                                .date(LocalDate.now())
                                 .build())
                         .toList()
         );

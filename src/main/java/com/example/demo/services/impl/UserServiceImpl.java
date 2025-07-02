@@ -11,14 +11,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+// Implementation of UserService for handling user authentication logic.
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    // Repository for user data access.
     private final UserRepository userRepository;
+    // Password encoder for verifying user credentials.
     private final PasswordEncoder passwordEncoder;
+    // Utility for generating JWT tokens.
     private final JwtUtils jwtUtils;
 
+    /**
+     * Authenticates a user and generates a JWT token if credentials are valid.
+     */
     @Override
     public AuthResponseDTO login(LoginRequestDTO loginDTO) {
         User user = userRepository.findByEmail(loginDTO.getEmail())

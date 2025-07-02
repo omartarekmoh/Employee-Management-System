@@ -1,0 +1,553 @@
+{
+  "info": {
+    "_postman_id": "e1b2c3d4-5678-1234-9abc-def012345678",
+    "name": "Employee Management API",
+    "description": "Comprehensive Postman collection for the Employee Management System API. Includes authentication, department, and employee endpoints with example requests and responses. Use the {{base_url}} and {{jwt_token}} variables for flexibility.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080/api" },
+    { "key": "jwt_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"adminpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email and password. Returns a JWT token.\n\n**Request Body:**\n```json\n{\n  \"email\": \"admin@company.com\",\n  \"password\": \"adminpassword\"\n}\n```\n\n**Response:**\n```json\n{\n  \"token\": \"<JWT>\"\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+            },
+            {
+              "name": "Invalid Credentials",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Invalid email or password\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "Get All Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments",
+              "host": ["{{base_url}}"],
+              "path": ["departments"]
+            },
+            "description": "Get a list of all departments.\n\n**Roles:** USER, ADMIN\n\n**Response:**\n```json\n[\n  { \"id\": 1, \"name\": \"Engineering\" },\n  { \"id\": 2, \"name\": \"HR\" }\n]\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  { \"id\": 1, \"name\": \"Engineering\" },\n  { \"id\": 2, \"name\": \"HR\" }\n]"
+            },
+            {
+              "name": "Unauthorized",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Department by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments/1",
+              "host": ["{{base_url}}"],
+              "path": ["departments", "1"]
+            },
+            "description": "Get a department by its ID.\n\n**Roles:** USER, ADMIN\n\n**Response:**\n```json\n{ \"id\": 1, \"name\": \"Engineering\" }\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{ \"id\": 1, \"name\": \"Engineering\" }"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Department not found\"\n}"
+            },
+            {
+              "name": "Type Mismatch Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Method parameter 'id': Failed to convert value to required type 'Long'\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Finance\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/departments",
+              "host": ["{{base_url}}"],
+              "path": ["departments"]
+            },
+            "description": "Create a new department.\n\n**Roles:** ADMIN\n\n**Request Body:**\n```json\n{\n  \"name\": \"Finance\"\n}\n```\n\n**Response:**\n```json\n{ \"id\": 3, \"name\": \"Finance\" }\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{ \"id\": 3, \"name\": \"Finance\" }"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": { \"name\": \"Name is required\" }\n}"
+            },
+            {
+              "name": "Duplicate Name Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Department name is already in use\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Marketing\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/departments/1",
+              "host": ["{{base_url}}"],
+              "path": ["departments", "1"]
+            },
+            "description": "Update a department by ID.\n\n**Roles:** ADMIN\n\n**Request Body:**\n```json\n{\n  \"name\": \"Marketing\"\n}\n```\n\n**Response:**\n```json\n{ \"id\": 1, \"name\": \"Marketing\" }\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{ \"id\": 1, \"name\": \"Marketing\" }"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": { \"name\": \"Name is required\" }\n}"
+            },
+            {
+              "name": "Duplicate Name Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Department name is already in use\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Department not found\"\n}"
+            },
+            {
+              "name": "Type Mismatch Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Method parameter 'id': Failed to convert value to required type 'Long'\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Department",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments/1",
+              "host": ["{{base_url}}"],
+              "path": ["departments", "1"]
+            },
+            "description": "Delete a department by ID.\n\n**Roles:** ADMIN\n\n**Response:**\n- 204 No Content on success\n- 409 Conflict if department is in use\n- 404 Not Found if department does not exist"
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "originalRequest": {},
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            },
+            {
+              "name": "Conflict",
+              "originalRequest": {},
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Cannot delete or update because the record is still referenced by another entity.\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Department not found\"\n}"
+            },
+            {
+              "name": "Type Mismatch Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Method parameter 'id': Failed to convert value to required type 'Long'\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Get All Employees",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employees",
+              "host": ["{{base_url}}"],
+              "path": ["employees"]
+            },
+            "description": "Get a list of all employees.\n\n**Roles:** USER, ADMIN\n\n**Response:**\n```json\n[\n  {\n    \"id\": 1,\n    \"name\": \"Alice Smith\",\n    \"email\": \"alice@company.com\",\n    \"salary\": 65000,\n    \"hireDate\": \"2023-01-01\",\n    \"departmentName\": \"Engineering\"\n  }\n]\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": 1,\n    \"name\": \"Alice Smith\",\n    \"email\": \"alice@company.com\",\n    \"salary\": 65000,\n    \"hireDate\": \"2023-01-01\",\n    \"departmentName\": \"Engineering\"\n  }\n]"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Employee by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employees/1",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "1"]
+            },
+            "description": "Get an employee by ID.\n\n**Roles:** USER, ADMIN\n\n**Response:**\n```json\n{\n  \"id\": 1,\n  \"name\": \"Alice Smith\",\n  \"email\": \"alice@company.com\",\n  \"salary\": 65000,\n  \"hireDate\": \"2023-01-01\",\n  \"departmentName\": \"Engineering\"\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Alice Smith\",\n  \"email\": \"alice@company.com\",\n  \"salary\": 65000,\n  \"hireDate\": \"2023-01-01\",\n  \"departmentName\": \"Engineering\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Employee not found\"\n}"
+            },
+            {
+              "name": "Type Mismatch Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Method parameter 'id': Failed to convert value to required type 'Long'\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 62000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees",
+              "host": ["{{base_url}}"],
+              "path": ["employees"]
+            },
+            "description": "Create a new employee.\n\n**Roles:** ADMIN\n\n**Request Body:**\n```json\n{\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 62000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentId\": 1\n}\n```\n\n**Response:**\n```json\n{\n  \"id\": 2,\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 62000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentName\": \"Engineering\"\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 2,\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 62000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentName\": \"Engineering\"\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": { \"email\": \"Email must be valid\" }\n}"
+            },
+            {
+              "name": "Duplicate Email Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Email is already in use\"\n}"
+            },
+            {
+              "name": "Department Not Found Error",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Department not found\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 63000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/1",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "1"]
+            },
+            "description": "Update an employee by ID.\n\n**Roles:** ADMIN\n\n**Request Body:**\n```json\n{\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 63000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentId\": 2\n}\n```\n\n**Response:**\n```json\n{\n  \"id\": 1,\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 63000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentName\": \"HR\"\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Bob Johnson\",\n  \"email\": \"bob@company.com\",\n  \"salary\": 63000,\n  \"hireDate\": \"2023-02-01\",\n  \"departmentName\": \"HR\"\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": { \"email\": \"Email must be valid\" }\n}"
+            },
+            {
+              "name": "Duplicate Email Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Email is already in use\"\n}"
+            },
+            {
+              "name": "Department Not Found Error",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Department not found\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Employee not found\"\n}"
+            },
+            {
+              "name": "Type Mismatch Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Method parameter 'id': Failed to convert value to required type 'Long'\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employees/1",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "1"]
+            },
+            "description": "Delete an employee by ID.\n\n**Roles:** ADMIN\n\n**Response:**\n- 204 No Content on success\n- 404 Not Found if employee does not exist"
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "originalRequest": {},
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {},
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Employee not found\"\n}"
+            },
+            {
+              "name": "Type Mismatch Error",
+              "originalRequest": {},
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"error\": \"Method parameter 'id': Failed to convert value to required type 'Long'\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {},
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Access denied - You do not have the required role\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

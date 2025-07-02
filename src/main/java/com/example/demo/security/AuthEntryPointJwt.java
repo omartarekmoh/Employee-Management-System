@@ -9,9 +9,13 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+// Entry point for handling unauthorized access (401 errors) in the security framework.
 @Component
 public class AuthEntryPointJwt implements AuthenticationEntryPoint {
 
+    /**
+     * Handles unauthorized access by sending a 401 response with a JSON error message.
+     */
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,

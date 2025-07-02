@@ -7,24 +7,30 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
+// Security configuration class for setting up JWT authentication, authorization rules, and password encoding.
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // Filter for processing JWT authentication.
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    // Entry point for handling unauthorized access (401 errors).
     private final AuthEntryPointJwt authEntryPointJwt;
-    private final CustomAccessDeniedHandler accessDeniedHandler; // ✅ Inject it
+    // Handler for access denied (403 errors) due to insufficient roles.
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
+    /**
+     * Configures the security filter chain, including endpoint permissions, exception handling, and JWT filter.
+     * @param http The HttpSecurity object to configure.
+     * @return The configured SecurityFilterChain.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -47,6 +53,10 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Provides a BCrypt password encoder bean with strength 12.
+     * @return The password encoder.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);

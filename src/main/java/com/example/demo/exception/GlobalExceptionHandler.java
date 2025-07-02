@@ -80,6 +80,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(message, HttpStatus.CONFLICT);
     }
 
+    // Handle method argument type mismatch
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String paramName = ex.getName();

@@ -12,12 +12,16 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// Implementation of DepartmentService for handling department-related business logic.
 @Service
 @RequiredArgsConstructor
 public class DepartmentServiceImpl implements DepartmentService {
+    // Repository for department data access.
     private final DepartmentRepository departmentRepo;
 
-
+    /**
+     * Creates a new department after checking for name uniqueness.
+     */
     @Override
     public DepartmentResponseDTO createDepartment(DepartmentRequestDTO dto) {
         if (departmentRepo.existsByName(dto.getName())) {
@@ -33,7 +37,9 @@ public class DepartmentServiceImpl implements DepartmentService {
         return mapToResponse(saved);
     }
 
-
+    /**
+     * Retrieves a department by its ID.
+     */
     @Override
     public DepartmentResponseDTO getDepartment(Long id) {
         return departmentRepo.findById(id)
@@ -41,6 +47,9 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .orElseThrow(() -> new EntityNotFoundException("Department not found with ID: " + id));
     }
 
+    /**
+     * Retrieves all departments.
+     */
     @Override
     public List<DepartmentResponseDTO> getAllDepartments() {
         return departmentRepo.findAll().stream()
@@ -48,6 +57,9 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Updates an existing department after checking for name uniqueness.
+     */
     @Override
     public DepartmentResponseDTO updateDepartment(Long id, DepartmentRequestDTO dto) {
         Department department = departmentRepo.findById(id)
@@ -63,7 +75,9 @@ public class DepartmentServiceImpl implements DepartmentService {
         return mapToResponse(updated);
     }
 
-
+    /**
+     * Deletes a department by its ID.
+     */
     @Override
     public void deleteDepartment(Long id) {
         if (!departmentRepo.existsById(id)) {
@@ -72,6 +86,9 @@ public class DepartmentServiceImpl implements DepartmentService {
         departmentRepo.deleteById(id);
     }
 
+    /**
+     * Maps a Department entity to a DepartmentResponseDTO.
+     */
     private DepartmentResponseDTO mapToResponse(Department e) {
         DepartmentResponseDTO dto = new DepartmentResponseDTO();
         dto.setId(e.getId());
