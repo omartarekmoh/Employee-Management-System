@@ -16,5 +16,5 @@ INSERT INTO employee (name, email, salary, hire_date, department_id) VALUES
 
 -- Seed Users
 INSERT INTO users (username, email, password, role) VALUES
-                                                        ('admin', 'admin@company.com', '$2a$12$YGIQsajODZHpJZKjV2Ii1OpxTrjQ3x/7bYi/.qm1Jz7L1B7ZQtToW', 'ADMIN'),
-                                                        ('user', 'user@company.com', '$2a$12$wQJLzwJSNPmbJL8u/NyuK.rRKhvlcxrQpjc1M.vWVg/XEwLbL08iq', 'USER');
+                                                        ('admin', 'admin@company.com', '$2a$12$YGIQsajODZHpJZKjV2Ii1OpxTrjQ3x/7bYi/.qm1Jz7L1B7ZQtToW', 'ADMIN'), -- password: admin123
+                                                        ('user', 'user@company.com', '$2a$12$wQJLzwJSNPmbJL8u/NyuK.rRKhvlcxrQpjc1M.vWVg/XEwLbL08iq', 'USER'); -- password: user123
